@@ -31,7 +31,7 @@ class InstagramBot {
         await this.page.click(this.config.selectors.login_button);
         await this.page.waitForNavigation();
         //Close Turn On Nofications madal after login
-        await this.page.click(this.config.selectors.not_now_button);
+        // await this.page.click(this.config.selectors.not_now_button);
     };
 
     async visitHashtagUrl() {
@@ -49,8 +49,42 @@ class InstagramBot {
 
 
     async visitUserProfile() {
-        await this._scrapeUserProfile('https://www.instagram.com/mentionables_/', this.page)
+        await this._scrapeInfiniteScrollItems(this.page,'https://www.instagram.com/mentionables_/', this._extractUserPosts, 30)
+        // await this._scrapeUserProfile('https://www.instagram.com/mentionables_/', this.page)
     };
+
+
+    async visitPostUrl() {
+
+        await this._scrapePost(this.page, 'https://www.instagram.com/p/B7r5CRrhRcr/')
+
+    };
+
+
+    async _scrapePost(
+        page,
+        URL
+    ) {
+        await page.goto(URL);
+        let button = await page.$('button.dCJp8');
+        let click = 0
+
+        console.log(button)
+
+        while (click < 5){
+            button = await page.$('button.dCJp8')
+            await page.click('button.dCJp8')
+            button = await page.$('button.dCJp8')
+            console.log(button)
+            click ++
+            console.log(click)
+        }
+
+        // await page.click(button)
+        console.log('success')
+
+    };
+
 
     async _doPostLikeAndFollow (parentClass, page) {
 
@@ -323,20 +357,23 @@ class InstagramBot {
         await this.browser.close();
     };
 
-    async scrapeInfiniteScrollItems(
-        targetSelector,
+    async _scrapeInfiniteScrollItems(
+        page,
+        URL,
+        extractionMethod,
         itemTargetCount,
         scrollDelay = 1000,
     ) {
+        await page.goto(URL)
         let items = [];
         try {
             let previousHeight;
             while (items.length < itemTargetCount){
-                items = await this.page.evaluate(this._extractItems);
-                previousHeight = await this.page.evaluate('document.body.scrollHeight');
-                await this.page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
-                await this.page.waitForFunction(`document.body.scrollHeight > ${previousHeight}`);
-                await this.page.waitFor(scrollDelay);
+                items = await page.evaluate(extractionMethod);
+                previousHeight = await page.evaluate('document.body.scrollHeight');
+                await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
+                await page.waitForFunction(`document.body.scrollHeight > ${previousHeight}`);
+                await page.waitFor(scrollDelay);
             }
         } catch(e) {
             console.log(e)
@@ -344,16 +381,25 @@ class InstagramBot {
         console.log(items)
         return items;
 
-    }
+    };
 
-    _extractItems() {
-        const extractedElements = document.querySelectorAll('.BrX75');
-        console.log(extractedElements)
+    _extractUserPosts() {
+        const extractedElements = document.querySelectorAll('div.kIKUG > a');
         const items = []
         for (let element of extractedElements) {
-            items.push(element);
+            items.push(element.href);
         }
         return items
+    };
+
+    async _isElementVisible(page, cssSelector) {
+        let visible = true;
+        await page
+            .waitForSelector(cssSelector, {visible: true, timeout: 2000})
+            .catch(() => {
+                visible = false;
+            });
+        return visible
     }
 
 };

@@ -11,13 +11,15 @@ const run = async () => {
 
     await bot.loginInstagram().then(() => console.log("BROWSING INSTAGRAM"));
 
-    await bot.scrapeInfiniteScrollItems('[href]', 10)
+    // await bot.scrapeInfiniteScrollItems('[href]', 10)
 
     // await bot.visitHashtagUrl().then(() => console.log("VISITED HASH-TAG URL"));
 
     // await bot.unFollowUsers();
 
     // await bot.visitUserProfile()
+
+    await bot.visitPostUrl()
     
     await bot.closeBrowser().then(() => console.log("BROWSER CLOSE"));
     
